@@ -1,0 +1,9 @@
+name = "ImpulseResponse"
+uuid = "e12be1e0-aa82-11e8-132c-7750aeb71962"
+authors = ["Lixun <lixun.xia@outlook.com>"]
+version = "0.1.0"
+
+[deps]
+DeviceUnderTest = "b9a09440-a9ba-11e8-0b7e-3f451cc48bcf"
+Libaudio = "492fcaa0-a483-11e8-0aa5-8960d485180b"
+Soundcard = "769233a0-a99e-11e8-0f56-b3b741a1b319"
