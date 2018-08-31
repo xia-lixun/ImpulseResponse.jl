@@ -218,7 +218,7 @@ function expsinesweep_fileio_asio(f, ms::Matrix, mm::Matrix, fs=48000, fm=47999.
         f[:init]()
         f[:readyplay](out)
         done = remotecall(f[:play], wid[1])
-        r = Soundcard.record(round(Int,fs*size(y,1)/fm), mm, fs)
+        r = convert(Matrix{Float64}, Soundcard.record(round(Int,fs*size(y,1)/fm), mm, fs))
         fetch(done)
 
         nx = size(x,1)
