@@ -1,20 +1,20 @@
 module ImpulseResponse
-using Libaudio
 using Statistics
 using Random
-using WAV
 using LinearAlgebra
-@everywhere using SharedArray
-@everywhere using Soundcard
-@everywhere using DeviceUnderTest
-
+using Distributed
+using SharedArrays
+using Libaudio
+using Soundcard
+using DeviceUnderTest
+using WAV
 
 
 
 """
 simulation
 """
-function expsinesweep_simulate(fs=48000., f0=22, f1=22000, ts=10, td=3)
+function expsinesweep_simulate(fs=48000., f0=22, f1=22000, ts=10, td=3, eq=[([1.0],[1.0])])
     s = Libaudio.expsinesweep(f0, f1, ts, fs)
     m = length(s)
     n = round(Int, td * fs)
@@ -27,7 +27,7 @@ function expsinesweep_simulate(fs=48000., f0=22, f1=22000, ts=10, td=3)
     ellip_a = [1.0, -1.544070855644442, 2.377072040756431, -1.638501402700271, 0.950992608325718, -0.210354984704200]
     r = Libaudio.filt(ellip_b, ellip_a, x)
     p = median(abs.(r))
-    r[r.>p] = p
+    r[r.>p] .= p
     return Libaudio.impulse(s, n, f0, f1, fs, r)
 end
 
