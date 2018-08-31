@@ -207,14 +207,12 @@ function expsinesweep_fileio_asio(f, ms::Matrix, mm::Matrix, fs=48000, fm=47999.
     x = zeros(m+n, 1)
     x[1:m,1] = s
     for i in eq
-        x = LibAudio.tf_filter(i[1], i[2], x)  
+        x = Libaudio.filt(i[1], i[2], x)  
     end
     sym = convert(Vector{Float64}, Libaudio.symbol_expsinesweep(f2, f3, tsm, fm))
     y = Libaudio.encode_syncsymbol(tcs, sym, tsd, x * 10^(atten/20), fm, 1, syncatten)
     out = randstring() * ".wav"
-    av = [8000, 16000, 44100, 48000, 96000, 192000]
-    wavwrite(DeviceUnderTest.mixer(y, ms), out, Fs=av[findmin(abs.(av.-fm))[2]], nbits=32)
-    # t_essd = length(essd) / fd  
+    wavwrite(DeviceUnderTest.mixer(y, ms), out, Fs=fs, nbits=32)
     
     try
         f[:init]()
@@ -223,7 +221,6 @@ function expsinesweep_fileio_asio(f, ms::Matrix, mm::Matrix, fs=48000, fm=47999.
         r = Soundcard.record(round(Int,fs*size(y,1)/fm), mm, fs)
         fetch(done)
 
-        # decode async signal
         nx = size(x,1)
         tx = nx / fm
         syma = convert(Vector{Float64}, Libaudio.symbol_expsinesweep(f2, f3, tsm, fs))
