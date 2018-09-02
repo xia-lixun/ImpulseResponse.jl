@@ -1,4 +1,5 @@
 module ImpulseResponse
+
 using Statistics
 using Random
 using LinearAlgebra
@@ -7,7 +8,7 @@ using SharedArrays
 using Libaudio
 using Soundcard
 using DeviceUnderTest
-using WAV
+
 
 
 
@@ -109,14 +110,14 @@ function expsinesweep_fileio(f, ms::Matrix, mm::Matrix, fs=47999.6, f0=22, f1=22
     y = Libaudio.encode_syncsymbol(tcs, sym, tsd, x * 10^(atten/20), fs, 1, syncatten)
     out = randstring() * ".wav"
     av = [8000, 16000, 44100, 48000, 96000, 192000]
-    wavwrite(DeviceUnderTest.mixer(y, ms), out, Fs=av[findmin(abs.(av.-fs))[2]], nbits=32)
+    Libaudio.wavwrite(DeviceUnderTest.mixer(y, ms), out, av[findmin(abs.(av.-fs))[2]], 32)
 
     try
         f[:init]()
         f[:readyplayrecord](out, ceil(size(y,1)/fs), true)
         f[:playrecord](true)
         DeviceUnderTest.raw2wav16bit("./capture/mic_pcm_before_resample_8ch_48000.raw", size(mm,1), 48000, "./capture/mic_pcm_before_resample_8ch_48000.wav")
-        r, rate = wavread("./capture/mic_pcm_before_resample_8ch_48000.wav")
+        r, rate = Libaudio.wavread("./capture/mic_pcm_before_resample_8ch_48000.wav", "double")
 
         nx = size(x,1)
         p = Libaudio.decode_syncsymbol(r, sym, tsd, nx/fs, fs)
@@ -166,7 +167,7 @@ function expsinesweep_asio_fileio(f, ms::Matrix, mm::Matrix, fs=48000, fm=47999.
         f[:record](true)
         fetch(done)
         DeviceUnderTest.raw2wav16bit("./capture/mic_pcm_before_resample_8ch_48000.raw", size(mm,1), 48000, "./capture/mic_pcm_before_resample_8ch_48000.wav")
-        r,rate = wavread("./capture/mic_pcm_before_resample_8ch_48000.wav")
+        r,rate = Libaudio.wavread("./capture/mic_pcm_before_resample_8ch_48000.wav", "double")
         
         # decode async signal
         nx = size(x,1)
@@ -212,7 +213,7 @@ function expsinesweep_fileio_asio(f, ms::Matrix, mm::Matrix, fs=48000, fm=47999.
     sym = convert(Vector{Float64}, Libaudio.symbol_expsinesweep(f2, f3, tsm, fm))
     y = Libaudio.encode_syncsymbol(tcs, sym, tsd, x * 10^(atten/20), fm, 1, syncatten)
     out = randstring() * ".wav"
-    wavwrite(DeviceUnderTest.mixer(y, ms), out, Fs=fs, nbits=32)
+    Libaudio.wavwrite(DeviceUnderTest.mixer(y, ms), out, fs, 32)
     
     try
         f[:init]()
@@ -293,7 +294,7 @@ function measureclockdrift(f, ms::Matrix{Float64}, mm::Matrix{Float64}, rep=3, f
     f[:init]()
     out = randstring() * ".wav"
     playback = "dutplaybackclockdriftmeasure.wav"
-    wavwrite(Device.mixer(signal, ms), out, Fs=fs, nbits=32)
+    Libaudio.wavwrite(Device.mixer(signal, ms), out, fs, 32)
     @info "filesize in MiB" filesize(out)/1024/1024
     f[:readyplay](out)
     @info "singal pushed to device"
@@ -301,7 +302,7 @@ function measureclockdrift(f, ms::Matrix{Float64}, mm::Matrix{Float64}, rep=3, f
     done = remotecall(f[:play], wpid[1])
     r = Soundcard.record(size(signal,1), mm, fs)
     fetch(done)
-    wavwrite(r, "clockdrift.wav", Fs=fs, nbits=32)
+    Libaudio.wavwrite(r, "clockdrift.wav", fs, 32)
     @info "recording written to clockdrift.wav"
 
     # syncs = 10^(-6/20) * LibAudio.syncsymbol(800, 2000, 1, fss)

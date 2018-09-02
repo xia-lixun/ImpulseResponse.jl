@@ -58,8 +58,8 @@ deps = ["Mmap"]
 uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 
 [[DeviceUnderTest]]
-deps = ["Test", "WAV"]
-git-tree-sha1 = "f902ae1b0e4d90757947dd94d0a4810d20bd3306"
+deps = ["Libaudio", "Test"]
+git-tree-sha1 = "bc975e9a256806a507072493ae20715beea87d9e"
 repo-rev = "master"
 repo-url = "https://github.com/xia-lixun/DeviceUnderTest.jl"
 uuid = "b9a09440-a9ba-11e8-0b7e-3f451cc48bcf"
@@ -74,12 +74,6 @@ deps = ["AbstractFFTs", "BinaryProvider", "Compat", "Conda", "Libdl", "LinearAlg
 git-tree-sha1 = "29cda58afbf62f35b1a094882ad6c745a47b2eaa"
 uuid = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 version = "0.2.4"
-
-[[FileIO]]
-deps = ["Pkg", "Random", "Test"]
-git-tree-sha1 = "b80161b7e679a1241f9441ebfa60b62d4239cf99"
-uuid = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
-version = "1.0.1"
 
 [[FixedPointNumbers]]
 deps = ["Pkg", "Test"]
@@ -103,18 +97,12 @@ git-tree-sha1 = "fec8e4d433072731466d37ed0061b3ba7f70eeb9"
 uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 version = "0.19.0"
 
-[[KahanSummation]]
-deps = ["Pkg", "Test"]
-git-tree-sha1 = "1f01068b28d3ad83d4d1212a0ce8d7ecacb33482"
-uuid = "8e2b3108-d4c1-50be-a7a2-16352aec75c3"
-version = "0.1.0"
-
 [[LibGit2]]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
 
 [[Libaudio]]
-deps = ["FFTW", "KahanSummation", "LinearAlgebra", "Plots", "Polynomials", "Random", "SHA", "Statistics", "Test", "WAV"]
-git-tree-sha1 = "c8bf66a0e72b0292f5dcdcfe1094c2b8ae2b8055"
+deps = ["FFTW", "LinearAlgebra", "Polynomials", "Random", "SHA", "Statistics", "Test"]
+git-tree-sha1 = "855ac35675eab09e1d09fff343da4b75022d3a3c"
 repo-rev = "master"
 repo-url = "https://github.com/xia-lixun/Libaudio.jl"
 uuid = "492fcaa0-a483-11e8-0aa5-8960d485180b"
@@ -239,8 +227,8 @@ uuid = "a2af1166-a08f-5f64-846c-94a0d3cef48c"
 version = "0.3.1"
 
 [[Soundcard]]
-deps = ["Libaudio", "SharedArrays", "Statistics", "Test", "WAV"]
-git-tree-sha1 = "c9218a44335959a5f25281e1309e921bbfbd9bdf"
+deps = ["Libaudio", "SharedArrays", "Statistics", "Test"]
+git-tree-sha1 = "3028afa20f32622bffbefec79e88c49810b98c25"
 repo-rev = "master"
 repo-url = "https://github.com/xia-lixun/Soundcard.jl"
 uuid = "769233a0-a99e-11e8-0f56-b3b741a1b319"
@@ -282,9 +270,3 @@ deps = ["Compat"]
 git-tree-sha1 = "c9d5aa108588b978bd859554660c8a5c4f2f7669"
 uuid = "81def892-9a0e-5fdd-b105-ffc91e053289"
 version = "1.1.2"
-
-[[WAV]]
-deps = ["Compat", "FileIO"]
-git-tree-sha1 = "818685a68451f4c2a0668fb1481cf96948e105e7"
-uuid = "8149f6b0-98f6-5db9-b78f-408fbbb8ef88"
-version = "1.0.0"
