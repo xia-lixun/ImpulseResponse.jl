@@ -116,9 +116,7 @@ function expsinesweep_fileio(f, ms::Matrix, mm::Matrix, fs=47999.6, f0=22, f1=22
         f[:init]()
         f[:readyplayrecord](out, ceil(size(y,1)/fs), true)
         f[:playrecord](true)
-        DeviceUnderTest.raw2wav16bit("./capture/mic_pcm_before_resample_8ch_48000.raw", size(mm,1), 48000, "./capture/mic_pcm_before_resample_8ch_48000.wav")
-        r, rate = Libaudio.wavread("./capture/mic_pcm_before_resample_8ch_48000.wav", "double")
-
+        r, rate = Libaudio.wavread("./raw_out_mic_all_16bit_48k_8ch_mic_pcm_before_resample_8ch_48000.wav", "double")
         nx = size(x,1)
         p = Libaudio.decode_syncsymbol(r, sym, tsd, nx/fs, fs)
         c = size(r,2)
@@ -131,7 +129,7 @@ function expsinesweep_fileio(f, ms::Matrix, mm::Matrix, fs=47999.6, f0=22, f1=22
         return Libaudio.impulse(s, n, f0, f1, fs, rd)
     finally
         rm(out, force=true)
-        rm("./capture/", force=true, recursive=true)
+        rm("./raw_out_mic_all_16bit_48k_8ch_mic_pcm_before_resample_8ch_48000.wav", force=true)
     end
 end
 
@@ -162,14 +160,10 @@ function expsinesweep_asio_fileio(f, ms::Matrix, mm::Matrix, fs=48000, fm=47999.
         f[:readyrecord](ceil(size(y,1)/fs), true)
         phy = Soundcard.mixer(y, ms)
         pcm = SharedArray{Float32,1}(Soundcard.to_interleave(phy))
-        # done = remotecall(Soundcard.play, wid[1], y, ms, fs) # latency is high
         done = remotecall(Soundcard.play, wid[1], size(phy), pcm, fs)  # latency is low
         f[:record](true)
         fetch(done)
-        DeviceUnderTest.raw2wav16bit("./capture/mic_pcm_before_resample_8ch_48000.raw", size(mm,1), 48000, "./capture/mic_pcm_before_resample_8ch_48000.wav")
-        r,rate = Libaudio.wavread("./capture/mic_pcm_before_resample_8ch_48000.wav", "double")
-        
-        # decode async signal
+        r,rate = Libaudio.wavread("./raw_out_mic_all_16bit_48k_8ch_mic_pcm_before_resample_8ch_48000.wav", "double")
         nx = size(x,1)
         tx = nx / fs
         syma = convert(Vector{Float64}, Libaudio.symbol_expsinesweep(f2, f3, tsm, fm))
@@ -187,7 +181,7 @@ function expsinesweep_asio_fileio(f, ms::Matrix, mm::Matrix, fs=48000, fm=47999.
         end
         return Libaudio.impulse(sa, na, f0, f1, fm, rd)
     finally
-        rm("./capture/", force=true, recursive=true)
+        rm("./raw_out_mic_all_16bit_48k_8ch_mic_pcm_before_resample_8ch_48000.wav", force=true)
     end  
 end
 
@@ -221,7 +215,6 @@ function expsinesweep_fileio_asio(f, ms::Matrix, mm::Matrix, fs=48000, fm=47999.
         done = remotecall(f[:play], wid[1])
         r = convert(Matrix{Float64}, Soundcard.record(round(Int,fs*size(y,1)/fm), mm, fs))
         fetch(done)
-
         nx = size(x,1)
         tx = nx / fm
         syma = convert(Vector{Float64}, Libaudio.symbol_expsinesweep(f2, f3, tsm, fs))
@@ -293,28 +286,31 @@ function measureclockdrift(f, ms::Matrix{Float64}, mm::Matrix{Float64}, rep=3, f
 
     f[:init]()
     out = randstring() * ".wav"
-    playback = "dutplaybackclockdriftmeasure.wav"
     Libaudio.wavwrite(Device.mixer(signal, ms), out, fs, 32)
     @info "filesize in MiB" filesize(out)/1024/1024
-    f[:readyplay](out)
-    @info "singal pushed to device"
 
-    done = remotecall(f[:play], wpid[1])
-    r = Soundcard.record(size(signal,1), mm, fs)
-    fetch(done)
-    Libaudio.wavwrite(r, "clockdrift.wav", fs, 32)
-    @info "recording written to clockdrift.wav"
+    try
+        f[:readyplay](out)
+        @info "singal pushed to device"
+        done = remotecall(f[:play], wpid[1])
+        r = Soundcard.record(size(signal,1), mm, fs)
+        fetch(done)
+        Libaudio.wavwrite(r, "clockdrift.wav", fs, 32)
+        @info "recording written to clockdrift.wav"
 
-    # syncs = 10^(-6/20) * LibAudio.syncsymbol(800, 2000, 1, fss)
-    # info("  syncs samples: $(length(syncs))")
-    # note: sync is approximately invariant due to its short length
-    measure = Array{Tuple{Float64, Float64, Float64},1}()
-    for k = 1:size(r,2)
-        lbs,pk,pkf,y = Libaudio.extractsymbol(r[:,k], sync, rep+1)
-        pkfd = diff(pkf)
-        chrodrift_100sec = ((pkfd[end] - pkfd[1]) / (rep-1))/fs
-        freqdrift_100sec = (size(period,1) - median(pkfd))/fs
-        push!(measure, (fs * size(period,1)/median(pkfd), freqdrift_100sec, chrodrift_100sec))
+        # syncs = 10^(-6/20) * LibAudio.syncsymbol(800, 2000, 1, fss)
+        # info("  syncs samples: $(length(syncs))")
+        # note: sync is approximately invariant due to its short length
+        measure = Array{Tuple{Float64, Float64, Float64},1}()
+        for k = 1:size(r,2)
+            lbs,pk,pkf,y = Libaudio.extractsymbol(r[:,k], sync, rep+1)
+            pkfd = diff(pkf)
+            chrodrift_100sec = ((pkfd[end] - pkfd[1]) / (rep-1))/fs
+            freqdrift_100sec = (size(period,1) - median(pkfd))/fs
+            push!(measure, (fs * size(period,1)/median(pkfd), freqdrift_100sec, chrodrift_100sec))
+        end
+    finally
+        rm(out)
     end
     measure
 end
