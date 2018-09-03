@@ -159,7 +159,7 @@ function expsinesweep_asio_fileio(f, ms::Matrix, mm::Matrix, fs=48000, fm=47999.
         f[:init]()
         f[:readyrecord](ceil(size(y,1)/fs), true)
         phy = Soundcard.mixer(y, ms)
-        pcm = SharedArray{Float32,1}(Soundcard.to_interleave(phy))
+        pcm = SharedArray{Float32,1}(Soundcard.interleave(phy))
         done = remotecall(Soundcard.play, wid[1], size(phy), pcm, fs)  # latency is low
         f[:record](true)
         fetch(done)
