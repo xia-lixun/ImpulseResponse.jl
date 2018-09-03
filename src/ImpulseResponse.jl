@@ -286,7 +286,7 @@ function measureclockdrift(f, ms::Matrix{Float64}, mm::Matrix{Float64}, rep=3, f
 
     f[:init]()
     out = randstring() * ".wav"
-    Libaudio.wavwrite(Device.mixer(signal, ms), out, fs, 32)
+    Libaudio.wavwrite(DeviceUnderTest.mixer(signal, ms), out, fs, 32)
     @info "filesize in MiB" filesize(out)/1024/1024
 
     try
