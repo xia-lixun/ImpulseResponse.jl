@@ -289,15 +289,15 @@ function measureclockdrift(f, ms::Matrix{Float64}, mm::Matrix{Float64}, rep=3, f
     Libaudio.wavwrite(DeviceUnderTest.mixer(signal, ms), out, fs, 32)
     @info "filesize in MiB" filesize(out)/1024/1024
 
+    measure = Array{Tuple{Float64, Float64, Float64},1}()
     try
         f[:readyplay](out)
         @info "singal pushed to device"
         done = remotecall(f[:play], wpid[1])
         r = Soundcard.record(size(signal,1), mm, fs)
         fetch(done)
-        Libaudio.wavwrite(r, "clockdrift.wav", fs, 32)
-        @info "recording written to clockdrift.wav"
-        measure = Array{Tuple{Float64, Float64, Float64},1}()
+        # Libaudio.wavwrite(r, "clockdrift.wav", fs, 32)
+        # @info "recording written to clockdrift.wav"
         for k = 1:size(r,2)
             lbs,pk,pkf,y = Libaudio.extractsymbol(convert(Vector{Float64},r[:,k]), sync, rep+1)
             pkfd = diff(pkf)
