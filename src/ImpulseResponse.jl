@@ -297,13 +297,9 @@ function measureclockdrift(f, ms::Matrix{Float64}, mm::Matrix{Float64}, rep=3, f
         fetch(done)
         Libaudio.wavwrite(r, "clockdrift.wav", fs, 32)
         @info "recording written to clockdrift.wav"
-
-        # syncs = 10^(-6/20) * LibAudio.syncsymbol(800, 2000, 1, fss)
-        # info("  syncs samples: $(length(syncs))")
-        # note: sync is approximately invariant due to its short length
         measure = Array{Tuple{Float64, Float64, Float64},1}()
         for k = 1:size(r,2)
-            lbs,pk,pkf,y = Libaudio.extractsymbol(r[:,k], sync, rep+1)
+            lbs,pk,pkf,y = Libaudio.extractsymbol(convert(Vector{Float64},r[:,k]), sync, rep+1)
             pkfd = diff(pkf)
             chrodrift_100sec = ((pkfd[end] - pkfd[1]) / (rep-1))/fs
             freqdrift_100sec = (size(period,1) - median(pkfd))/fs
