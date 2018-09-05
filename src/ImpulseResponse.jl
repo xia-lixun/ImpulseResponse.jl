@@ -263,6 +263,9 @@ end
 # mixspk[1,1] = 1.0
 # mixmic = zeros(9,1)
 # mixmic[9,1] = 1.0
+"""
+dut@fm -> soundcard@fs
+"""
 function measureclockdrift(f, ms::Matrix{Float64}, mm::Matrix{Float64}, rep=3, fs=48000, f2=800, f3=2000, tsm=0.5, atten=-6)
     # 
     #   +--------+--------+--------+--------+--------+ => 5 samples in digital domain played via dut's speaker, whose sample interval is Td.
@@ -284,22 +287,22 @@ function measureclockdrift(f, ms::Matrix{Float64}, mm::Matrix{Float64}, rep=3, f
     signal = [zeros(round(Int,3fs),1); sync; repeat(period,rep,1); zeros(round(Int,3fs),1)]
     @info "signal train formed"
 
-    f[:init]()
     out = randstring() * ".wav"
     Libaudio.wavwrite(DeviceUnderTest.mixer(signal, ms), out, fs, 32)
     @info "filesize in MiB" filesize(out)/1024/1024
 
     measure = Array{Tuple{Float64, Float64, Float64},1}()
     try
+        f[:init]()
         f[:readyplay](out)
         @info "singal pushed to device"
         done = remotecall(f[:play], wpid[1])
-        r = Soundcard.record(size(signal,1), mm, fs)
+        r = convert(Matrix{Float64}, Soundcard.record(size(signal,1), mm, fs))
         fetch(done)
         # Libaudio.wavwrite(r, "clockdrift.wav", fs, 32)
         # @info "recording written to clockdrift.wav"
         for k = 1:size(r,2)
-            lbs,pk,pkf,y = Libaudio.extractsymbol(convert(Vector{Float64},r[:,k]), sync, rep+1)
+            lbs,pk,pkf,y = Libaudio.extractsymbol(r[:,k], sync, rep+1)
             pkfd = diff(pkf)
             chrodrift_100sec = ((pkfd[end] - pkfd[1]) / (rep-1))/fs
             freqdrift_100sec = (size(period,1) - median(pkfd))/fs
@@ -310,5 +313,57 @@ function measureclockdrift(f, ms::Matrix{Float64}, mm::Matrix{Float64}, rep=3, f
     end
     measure
 end
+
+
+
+"""
+soundcard@fs -> dut@fm
+"""
+function measureclockdrift2(f, ms::Matrix{Float64}, mm::Matrix{Float64}, rep=3, fs=48000, f2=800, f3=2000, tsm=0.5, atten=-6)
+    # 
+    #   +--------+--------+--------+--------+--------+ => 5 samples in digital domain played via standard sampler of the soundcard, whose sample interval is Tr.
+    #   +-----+-----+-----+-----+-----+-----+-----+--- => 7 samples captured by the imperfect sampler of the device under test,
+    #  
+    #   5 x Tr ≈ 7 x Td
+    #   or formly, N/Fr ≈ Nm / Fd
+    #   Fd ≈ Nm / N x Fr
+    #   Fd/Fr ≈ Nm/N = 5/7  
+    #
+    @assert nprocs() > 1
+    wpid = workers()
+    @info "start measure clock drift"
+
+    sync = 10^(atten/20) * convert(Vector{Float64}, Libaudio.symbol_expsinesweep(f2, f3, tsm, fs))
+    @info "sync samples" length(sync)
+    period = [zeros(round(Int,100fs),1); sync]
+    signal = [zeros(round(Int,3fs),1); sync; repeat(period,rep,1); zeros(round(Int,3fs),1)]
+    @info "signal train formed"
+
+    measure = Array{Tuple{Float64, Float64, Float64},1}()
+    try
+        f[:init]()
+        f[:readyrecord](ceil(size(signal,1)/fs), true)
+        phy = Soundcard.mixer(signal, ms)
+        pcm = SharedArray{Float32,1}(Soundcard.interleave(phy))
+        done = remotecall(Soundcard.play, wpid[1], size(phy), pcm, fs)  # latency is low
+        f[:record](true)
+        fetch(done)
+        r,rate = Libaudio.wavread("./raw_out_mic_all_16bit_48k_8ch_mic_pcm_before_resample_8ch_48000.wav", "double")
+        for k = 1:size(r,2)
+            lbs,pk,pkf,y = Libaudio.extractsymbol(convert(Vector{Float64},r[:,k]), sync, rep+1)
+            pkfd = diff(pkf)
+            chrodrift_100sec = ((pkfd[end] - pkfd[1]) / (rep-1))/fs
+            freqdrift_100sec = (size(period,1) - median(pkfd))/fs
+            push!(measure, (fs * median(pkfd)/size(period,1), freqdrift_100sec, chrodrift_100sec))
+        end
+    finally
+        rm("./raw_out_mic_all_16bit_48k_8ch_mic_pcm_before_resample_8ch_48000.wav")
+    end
+    measure
+end
+
+
+
+
 
 end # module
