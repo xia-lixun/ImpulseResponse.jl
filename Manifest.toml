@@ -20,7 +20,7 @@ uuid = "3da002f7-5984-5a60-b8a6-cbb66c0b333f"
 version = "0.7.5"
 
 [[Colors]]
-deps = ["ColorTypes", "FixedPointNumbers", "InteractiveUtils", "Pkg", "Printf", "Reexport", "Test"]
+deps = ["ColorTypes", "FixedPointNumbers", "InteractiveUtils", "Printf", "Reexport", "Test"]
 git-tree-sha1 = "9f0a0210450acb91c730b730a994f8eef1d3d543"
 uuid = "5ae59095-9a9b-59fe-a467-6f913c188581"
 version = "0.9.5"
@@ -44,7 +44,7 @@ uuid = "d38c429a-6771-53c6-b99e-75d170b6e991"
 version = "0.5.1"
 
 [[DataStructures]]
-deps = ["InteractiveUtils", "OrderedCollections", "REPL", "Random", "Serialization", "Test"]
+deps = ["InteractiveUtils", "OrderedCollections", "Random", "Serialization", "Test"]
 git-tree-sha1 = "8fc6e166e24fda04b2b648d4260cdad241788c54"
 uuid = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 version = "0.14.0"
@@ -59,7 +59,7 @@ uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 
 [[DeviceUnderTest]]
 deps = ["Libaudio", "Test"]
-git-tree-sha1 = "58a27588bc5246e3d0c7ad1ca083cb6876dacbc4"
+git-tree-sha1 = "6a7b391f5a4e30441b20c93e121b517693dbe9f2"
 repo-rev = "master"
 repo-url = "https://github.com/xia-lixun/DeviceUnderTest.jl"
 uuid = "b9a09440-a9ba-11e8-0b7e-3f451cc48bcf"
@@ -70,13 +70,13 @@ deps = ["LinearAlgebra", "Random", "Serialization", "Sockets"]
 uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[FFTW]]
-deps = ["AbstractFFTs", "BinaryProvider", "Compat", "Conda", "Libdl", "LinearAlgebra", "Pkg", "Reexport", "Test"]
+deps = ["AbstractFFTs", "BinaryProvider", "Compat", "Conda", "Libdl", "LinearAlgebra", "Reexport", "Test"]
 git-tree-sha1 = "29cda58afbf62f35b1a094882ad6c745a47b2eaa"
 uuid = "7a1cc6ca-52ef-59f5-83cd-3a7055c09341"
 version = "0.2.4"
 
 [[FixedPointNumbers]]
-deps = ["Pkg", "Test"]
+deps = ["Test"]
 git-tree-sha1 = "b8045033701c3b10bf2324d7203404be7aef88ba"
 uuid = "53c48c17-4a7d-5ca2-90c5-79b7896eea93"
 version = "0.5.3"
@@ -92,7 +92,7 @@ deps = ["LinearAlgebra", "Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 
 [[JSON]]
-deps = ["Dates", "Distributed", "Mmap", "Pkg", "Sockets", "Test", "Unicode"]
+deps = ["Dates", "Distributed", "Mmap", "Sockets", "Test", "Unicode"]
 git-tree-sha1 = "fec8e4d433072731466d37ed0061b3ba7f70eeb9"
 uuid = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 version = "0.19.0"
@@ -102,7 +102,7 @@ uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
 
 [[Libaudio]]
 deps = ["Dates", "FFTW", "LinearAlgebra", "Polynomials", "Random", "SHA", "Statistics", "Test"]
-git-tree-sha1 = "e347a6f19658f98c2e7b0d08747fd4cbe7ca033a"
+git-tree-sha1 = "3410ec284589c7e8adb6a0ae63eba001572cab6e"
 repo-rev = "master"
 repo-url = "https://github.com/xia-lixun/Libaudio.jl"
 uuid = "492fcaa0-a483-11e8-0aa5-8960d485180b"
@@ -123,7 +123,7 @@ deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
 [[Measures]]
-deps = ["Pkg", "Test"]
+deps = ["Test"]
 git-tree-sha1 = "ddfd6d13e330beacdde2c80de27c1c671945e7d9"
 uuid = "442fdcdd-2543-5da2-b0f3-8c86c306513e"
 version = "0.3.0"
@@ -144,7 +144,7 @@ uuid = "77ba4419-2d1f-58cd-9bb1-8ffee604a2e3"
 version = "0.3.2"
 
 [[OrderedCollections]]
-deps = ["Pkg", "Random", "Serialization", "Test"]
+deps = ["Random", "Serialization", "Test"]
 git-tree-sha1 = "85619a3f3e17bb4761fe1b1fd47f0e979f964d5b"
 uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 version = "1.0.2"
@@ -190,7 +190,7 @@ deps = ["Serialization"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [[RecipesBase]]
-deps = ["Pkg", "Random", "Test"]
+deps = ["Random", "Test"]
 git-tree-sha1 = "0b3cb370ee4dc00f47f1193101600949f3dcf884"
 uuid = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 version = "0.6.0"
@@ -218,7 +218,7 @@ deps = ["Distributed", "Mmap", "Random", "Serialization"]
 uuid = "1a1011a3-84de-559e-8e89-a11a2f7dc383"
 
 [[Showoff]]
-deps = ["Compat", "Pkg"]
+deps = ["Compat"]
 git-tree-sha1 = "276b24f3ace98bec911be7ff2928d497dc759085"
 uuid = "992d4aef-0814-514b-bc4d-f2e9a6c4116f"
 version = "0.2.1"
@@ -234,7 +234,7 @@ version = "0.3.1"
 
 [[Soundcard]]
 deps = ["Libaudio", "SharedArrays", "Statistics", "Test"]
-git-tree-sha1 = "6e47a1db13ff67544072782f203405a3d687ba8b"
+git-tree-sha1 = "6a70125f45dd0e448e383aa2aaafa361df28ab9c"
 repo-rev = "master"
 repo-url = "https://github.com/xia-lixun/Soundcard.jl"
 uuid = "769233a0-a99e-11e8-0f56-b3b741a1b319"
@@ -245,7 +245,7 @@ deps = ["LinearAlgebra", "Random"]
 uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 
 [[StaticArrays]]
-deps = ["InteractiveUtils", "LinearAlgebra", "Pkg", "Random", "Statistics", "Test"]
+deps = ["InteractiveUtils", "LinearAlgebra", "Random", "Statistics", "Test"]
 git-tree-sha1 = "ebc5c2a27d91d5ec611a9861168182e2168effd3"
 uuid = "90137ffa-7385-5640-81b9-e52037218182"
 version = "0.9.2"
