@@ -288,7 +288,7 @@ function measureclockdrift(f, ms::Matrix{Float64}, mm::Matrix{Float64}, rep=3, f
     @assert nprocs() > 1
     wpid = workers()
 
-    root = joinpath(Libaudio.folder(), Libaudio.logfile()
+    root = joinpath(Libaudio.folder(), Libaudio.logfile())
     # printstyled("impulseresponse.measureclockdrift: start measuring device clock drift\n", color=:light_cyan)
     Libaudio.printl(root, :light_cyan, Libaudio.nows() * " | ImpulseResponse.measureclockdrift: start measuring device clock drift")
 
@@ -358,7 +358,7 @@ function measureclockdrift2(f, ms::Matrix{Float64}, mm::Matrix{Float64}, rep=3, 
     #
     @assert nprocs() > 1
     wpid = workers()
-    root = joinpath(Libaudio.folder(), Libaudio.logfile()
+    root = joinpath(Libaudio.folder(), Libaudio.logfile())
 
     # printstyled("impulseresponse.measureclockdrift2: start measuring device clock drift\n", color=:light_cyan)
     Libaudio.printl(root, :light_cyan, Libaudio.nows() * " | ImpulseResponse.measureclockdrift2: start measuring device clock drift")
