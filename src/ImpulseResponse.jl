@@ -289,35 +289,30 @@ function measureclockdrift(f, ms::Matrix{Float64}, mm::Matrix{Float64}, rep=3, f
     wpid = workers()
 
     root = joinpath(Libaudio.folder(), Libaudio.logfile())
-    # printstyled("impulseresponse.measureclockdrift: start measuring device clock drift\n", color=:light_cyan)
     Libaudio.printl(root, :light_cyan, Libaudio.nows() * " | ImpulseResponse.measureclockdrift: start measuring device clock drift")
 
     # fileio -> asio
     sync = 10^(atten/20) * convert(Vector{Float64}, Libaudio.symbol_expsinesweep(f2, f3, tsm, fs))
-    # printstyled("impulseresponse.measureclockdrift: sync samples $(length(sync))\n", color=:light_cyan) 
     Libaudio.printl(root, :light_cyan, Libaudio.nows() * " | ImpulseResponse.measureclockdrift: measureclockdrift: sync samples $(length(sync))")
 
     period = [zeros(round(Int,100fs),1); sync]
     signal = [zeros(round(Int,3fs),1); sync; repeat(period,rep,1); zeros(round(Int,3fs),1)]
-    # printstyled("impulseresponse.measureclockdrift: stimulus formed\n", color=:light_cyan)
     Libaudio.printl(root, :light_cyan, Libaudio.nows() * " | ImpulseResponse.measureclockdrift: stimulus formed")
 
     out = randstring() * ".wav"
     Libaudio.wavwrite(out, DeviceUnderTest.mixer(signal, ms), fs, 32)
-    # printstyled("impulseresponse.measureclockdrift: filesize $(filesize(out)/1024/1024) MiB\n", color=:light_cyan) 
     Libaudio.printl(root, :light_cyan, Libaudio.nows() * " | ImpulseResponse.measureclockdrift: filesize $(filesize(out)/1024/1024) MiB")
 
     measure = Array{Tuple{Float64, Float64, Float64},1}()
     try
         f[:init]()
         f[:readyplay](out)
-        # printstyled("impulseresponse.measureclockdrift: stimulus pushed to device\n", color=:light_cyan)
         Libaudio.printl(root, :light_cyan, Libaudio.nows() * " | ImpulseResponse.measureclockdrift: stimulus pushed to device")
 
         done = remotecall(f[:play], wpid[1])
         r = convert(Matrix{Float64}, Soundcard.record(size(signal,1), mm, fs))
         fetch(done)
-        # Libaudio.wavwrite("clockdrift.wav", r, fs, 32)
+        # Libaudio.wavwrite("clockdrift.wav", r, fs, 16)
         val = true
         for k = 1:size(r,2)
             flag,lbs,pk,pkf,y = Libaudio.extractsymbol(r[:,k], sync, rep+1)
@@ -360,16 +355,14 @@ function measureclockdrift2(f, ms::Matrix{Float64}, mm::Matrix{Float64}, rep=3, 
     wpid = workers()
     root = joinpath(Libaudio.folder(), Libaudio.logfile())
 
-    # printstyled("impulseresponse.measureclockdrift2: start measuring device clock drift\n", color=:light_cyan)
+
     Libaudio.printl(root, :light_cyan, Libaudio.nows() * " | ImpulseResponse.measureclockdrift2: start measuring device clock drift")
 
     sync = 10^(atten/20) * convert(Vector{Float64}, Libaudio.symbol_expsinesweep(f2, f3, tsm, fs))
-    # printstyled("impulseresponse.measureclockdrift2: sync samples $(length(sync))\n", color=:light_cyan) 
     Libaudio.printl(root, :light_cyan, Libaudio.nows() * " | ImpulseResponse.measureclockdrift2: sync samples $(length(sync))")
 
     period = [zeros(round(Int,100fs),1); sync]
     signal = [zeros(round(Int,3fs),1); sync; repeat(period,rep,1); zeros(round(Int,3fs),1)]
-    # printstyled("impulseresponse.measureclockdrift2: stimulus formed\n", color=:light_cyan)
     Libaudio.printl(root, :light_cyan, Libaudio.nows() * " | ImpulseResponse.measureclockdrift2: stimulus formed")
 
     measure = Array{Tuple{Float64, Float64, Float64},1}()
