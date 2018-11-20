@@ -6,6 +6,8 @@ using LinearAlgebra
 using Distributed
 using SharedArrays
 
+using PyPlot
+
 using Libaudio
 using Soundcard
 using DeviceUnderTest
@@ -394,6 +396,141 @@ end
 
 
 
+
+
+
+"""
+function hFIR = eq_calibration(mix_spk, mix_mic, f_anchor, f_start, f_stop, atten)
+
+    fs = 48000;
+    ess_f0 = 10;
+    ess_f1 = fs/2;
+    ess_time = 30;
+    ess_decay = 5;
+    %atten = -20;
+    nfft = 65536;
+    nnyq = nfft/2+1;
+    
+    %@ measure the un-eq'd impulse response in the anechoic
+    [fundamental, harmonics, response_t] = impulse_response_exponential_sine_sweep(mix_spk, mix_mic, ess_f0, ess_f1, ess_time, ess_decay, 'asio', [1], [1], atten);
+    
+    
+    %@ cut the window with the impulse response out for analysis
+    p = 4.3e4;
+    x = fundamental(p+1:p+nfft);
+    x_spec = fft(x)./nfft;
+    x_phase = angle(x_spec);
+    f = ((0:nnyq-1)'./nfft).*fs;
+    x_spec_db = 20*log10(abs(x_spec(1:nnyq)));
+    
+    % smooth and plots
+    Noct = 3;
+    x_spec_db_sm = smoothSpectrum(x_spec_db,f,Noct);
+    figure(1);
+    subplot(2,1,1); plot(20*log10(abs(x))); title('impulse response in time domain'); xlabel('samples'); hold on;
+    %subplot(2,1,2); semilogx(f,x_spec_db,f,x_spec_db_sm); title('impulse response in frequency domain, with 1/3 octave smoothing'); xlabel('Hz'); hold on;
+    subplot(2,1,2); semilogx(f,x_spec_db_sm); title('impulse response in frequency domain, with 1/3 octave smoothing'); xlabel('Hz'); hold on;
+    
+    
+    % construct a minimal phase filter of the smoothed impulse response
+    x_spec_sm = 10.^(x_spec_db_sm/20);
+    x_spec_sm = [x_spec_sm; flipud(x_spec_sm(2:end-1))];
+    x_spec_sm = x_spec_sm .* exp(x_phase*1i);
+    x_sm = real(ifft(x_spec_sm));
+    
+    zs = fft(x_sm);
+    figure(2); semilogx(f, 20*log10(abs(zs(1:nnyq))), 'k'); hold on;
+    
+    zms = mps(fft(x_sm));
+    zm = real(ifft(zms)); % it is not symmetrical
+    zms = fft(zm);
+    semilogx(f, 20*log10(abs(zms(1:nnyq))), 'c--'); 
+    xlabel('Hz'); title('minimal phase filter constructed based on smoothed frequency response'); grid on;
+    
+    
+    % do the actual flatten work
+    %f1 = 22;
+    f1 = f_start;
+    f2 = f_stop;
+    f1 = ceil(f1 * nfft / fs);
+    f2 = floor(f2 * nfft / fs);
+    target = x_spec_db_sm(round(f_anchor * nfft / fs));
+    %target = x_spec_db(round(f_anchor * nfft / fs));
+    H = zeros(nnyq,1);
+    H(f1:f2) = target - x_spec_db_sm(f1:f2);
+    %H(f1:f2) = target - x_spec_db(f1:f2);
+    H(1:f1-1) = H(f1);
+    figure(3); semilogx(f, H, 'r'); hold on; 
+    
+    % compensation filter in time and frequency domain
+    H = 10.^(H/20) * nfft;
+    H = [H; flipud(H(2:end-1))];
+    H = H .* exp(x_phase*1i);
+    h = real(ifft(H));
+    hs = fft(h)./nfft;
+    semilogx(f, 20*log10(abs(hs(1:nnyq))), 'b--');
+    
+    hms = mps(fft(h));
+    hm = real(ifft(hms)); % it is not symmetrical
+    hms = fft(hm)./nfft;
+    semilogx(f, 20*log10(abs(hms(1:nnyq))), 'c--'); 
+    xlabel('Hz'); title('Compensation filter and its minimal-phase realization'); grid on;
+    figure(2); semilogx(f, 20*log10(abs(hms(1:nnyq)))+x_spec_db_sm, 'b'); grid on;
+    
+    [fundamental, harmonics, response_t] = impulse_response_exponential_sine_sweep(mix_spk, mix_mic, ess_f0, ess_f1, ess_time, ess_decay, 'asio', hm/nfft, [1], atten);
+    
+    p = 4.3e4;
+    x = fundamental(p+1:p+nfft);
+    x_spec = fft(x)./nfft;
+    x_phase = angle(x_spec);
+    f = ((0:nnyq-1)'./nfft).*fs;
+    x_spec_db = 20*log10(abs(x_spec(1:nnyq)));
+    
+    % smooth and plots
+    Noct = 3;
+    x_spec_db_sm = smoothSpectrum(x_spec_db,f,Noct);
+    figure(1);
+    subplot(2,1,1); plot(20*log10(abs(x)), 'r'); grid on;
+    %subplot(2,1,2); semilogx(f,x_spec_db,f,x_spec_db_sm); grid on;
+    subplot(2,1,2); semilogx(f,x_spec_db_sm); grid on;
+    
+    hFIR = hm / nfft;
+end
+"""
+function minimalphase_eq(ms::Matrix, mm::Matrix, fs, f0, f1=fs/2, attenuate=-50, unitcircle=1024, tess=30, tdecay=3, noct=3)
+    
+    PyPlot.ioff()
+
+    fundamental, harmonic, dirac, measure = expsinesweep_asio(ms, mm, fs, f0, f1, tess, tdecay, [([1.0],[1.0])], attenuate)
+    f, x = freqz(fundamental[:,1], fs, unitcircle)
+    ϕ = angle.(x)
+    xd = 20log10.(abs.(x))
+    xds = Libaudio.smoothspectrum(xd, f, noct)
+    
+    PyPlot.figure(1)
+    PyPlot.semilogx(f, xd)
+    PyPlot.semilogx(f, xds)
+    PyPlot.title('impulse response in frequency domain, with 1/3 octave smoothing')
+    PyPlot.xlabel('Hz')
+    PyPlot.grid()
+
+    # construct a minimal phase filter of the smoothed impulse response
+    xs = 10.^(xds/20)
+    xs = [xs; reverse(xs[2:end-1])]
+    fundamental_sm = real(ifft(xs .* exp.(ϕ*im)))
+    
+    y = fft(fundamental_sm)
+    z = Libaudio.mps(y)
+    fundamental_mp = real(ifft(z))    # be careful! it is not symmetrical
+
+    figure(2)
+    PyPlot.semilogx(f, 20log10.(abs.(y[1:length(f)])))
+    PyPlot.semilogx(f, 20*log10.(abs.(fft(fundamental_mp)[1:length(f)]))) 
+    PyPlot.xlabel('Hz')
+    PyPlot.title('minimal phase filter constructed based on smoothed frequency response');
+    PyPlot.grid()
+    
+end
 
 
 end # module
