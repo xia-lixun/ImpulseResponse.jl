@@ -5,7 +5,7 @@ using Random
 using LinearAlgebra
 using Distributed
 using SharedArrays
-
+using FFTW
 using PyPlot
 
 using Libaudio
@@ -497,14 +497,13 @@ function hFIR = eq_calibration(mix_spk, mix_mic, f_anchor, f_start, f_stop, atte
     hFIR = hm / nfft;
 end
 """
-function minimalphase_eq(ms::Matrix, mm::Matrix, fs, f0, f1=fs/2, fx=150, attenuate=-50, unitcircle=1024, tess=30, tdecay=3, noct=3)
-    
+function minimalphase_fir_original(ms::Matrix, mm::Matrix, fs, f0, f1=fs/2, attenuate=-50, unitcircle=1024, tess=30, tdecay=3, noct=3)
     PyPlot.ion()
 
     fundamental, harmonic, dirac, measure = expsinesweep_asio(ms, mm, fs, f0, f1, tess, tdecay, [([1.0],[1.0])], attenuate)
-    f, x = freqz(fundamental[:,1], fs, unitcircle)
+    f, x = Libaudio.freqz(fundamental[:,1], fs, unitcircle)
     m = length(f)
-    ϕ = angle.(x)
+    ϕ = [angle.(x); angle.(conj(reverse(x[2:end-1])))]
     xd = 20log10.(abs.(x))
     xds = Libaudio.smoothspectrum(xd, f, noct)
     
@@ -513,69 +512,77 @@ function minimalphase_eq(ms::Matrix, mm::Matrix, fs, f0, f1=fs/2, fx=150, attenu
     PyPlot.semilogx(f, xds)
     PyPlot.title("impulse response in frequency domain, with 1/3 octave smoothing")
     PyPlot.xlabel("Hz")
-    PyPlot.grid()
+    PyPlot.grid(true)
 
-    # construct a minimal phase filter of the smoothed impulse response
-    xs = 10 .^ (xds/20)
-    xs = [xs; reverse(xs[2:end-1])]
-    fundamental_sm = real(ifft(xs .* exp.(ϕ*im)))
-    
-    y = fft(fundamental_sm)
-    z = Libaudio.mps(y)
-    fundamental_mp = real(ifft(z))    # not symmetrical
+    return (f, m, ϕ, xds)
+end
 
-    figure(2)
-    PyPlot.semilogx(f, 20log10.(abs.(y[1:m])))
-    PyPlot.semilogx(f, 20log10.(abs.(fft(fundamental_mp)[1:m]))) 
-    PyPlot.xlabel("Hz")
-    PyPlot.title("minimal phase filter constructed based on smoothed frequency response")
-    PyPlot.grid()
-    
 
-    # do the actual flatten work
-    nfft = 2unitcircle
-    ω0 = ceil(f0 * nfft / fs)
-    ω1 = floor(f1 * nfft / fs)
-    ωx = round(fx * nfft / fs)
-    anchor = xds[ωx]
+function minimalphase_fir_design(f, m, ϕ, xds, fs, f0, f1, fx, unitcircle=1024)
+        # construct a minimal phase filter of the smoothed impulse response
+        xs = 10 .^ (xds/20)
+        xs = [xs; reverse(xs[2:end-1])]
+        fundamental_sm = real(ifft(xs .* exp.(ϕ*im)))
+        
+        y = fft(fundamental_sm)
+        z = Libaudio.mps(y)
+        fundamental_mp = real(ifft(z))    # not symmetrical
+    
+        figure(2)
+        PyPlot.semilogx(f, 20log10.(abs.(y[1:m])))
+        PyPlot.semilogx(f, 20log10.(abs.(fft(fundamental_mp)[1:m]))) 
+        PyPlot.xlabel("Hz")
+        PyPlot.title("minimal phase filter constructed based on smoothed frequency response")
+        PyPlot.grid(true)
+        
+    
+        # do the actual flatten work
+        nfft = 2unitcircle
+        ω0 = max(round(Int, f0*nfft/fs), 1)
+        ω1 = min(round(Int, f1*nfft/fs), m)
+        ωx = round(Int, fx*nfft/fs)
+        anchor = xds[ωx]
+    
+        
+        H = zeros(m)
+        H[ω0:ω1] .= anchor .- xds[ω0:ω1]
+        H[1:ω0-1] .= H[ω0]
+        H[ω1+1:end] .= H[ω1]
+        figure(3) 
+        PyPlot.semilogx(f, H)
+        
+        H = 10 .^ (H/20) * nfft
+        H = [H; reverse(H[2:end-1])]
+        H = H .* exp.(ϕ*im)
+        h = real(ifft(H))
+        hs = fft(h)/nfft
+        PyPlot.semilogx(f, 20log10.(abs.(hs[1:m])))
+        
+        hms = Libaudio.mps(fft(h))
+        hm = real(ifft(hms))    # not symmetrical
+        hms = fft(hm)/nfft
+        PyPlot.semilogx(f, 20log10.(abs.(hms[1:m]))) 
+        PyPlot.xlabel("Hz") 
+        PyPlot.title("Compensation filter and its minimal-phase realization")
+        PyPlot.grid(true)
+        
+        figure(2) 
+        PyPlot.semilogx(f, 20log10.(abs.(hms[1:m]))+xds) 
+        hfir = hm / nfft
+end
 
+
+function minimalphase_fir_verification(h, ms::Matrix, mm::Matrix, fs, f0, f1=fs/2, attenuate=-50, unitcircle=1024, tess=30, tdecay=3, noct=3)
     
-    H = zeros(m)
-    H[ω0:ω1] .= anchor - xds[ω0:ω1]
-    H[1:ω0-1] = H[ω0]
-    figure(3) 
-    PyPlot.semilogx(f, H)
-    
-    H = 10 .^ (H/20) * nfft
-    H = [H; reverse(H[2:end-1])]
-    H = H .* exp.(ϕ*im)
-    h = real(ifft(H))
-    hs = fft(h)/nfft
-    PyPlot.semilogx(f, 20log10.(abs.(hs[1:m])))
-    
-    hms = mps(fft(h))
-    hm = real(ifft(hms))    # not symmetrical
-    hms = fft(hm)/nfft
-    PyPlot.semilogx(f, 20log10.(abs.(hms[1:m]))) 
-    PyPlot.xlabel("Hz") 
-    PyPlot.title("Compensation filter and its minimal-phase realization")
-    PyPlot.grid()
-    
-    figure(2) 
-    PyPlot.semilogx(f, 20log10.(abs.(hms[1:m]))+xds) 
-    
-    hfir = hm / nfft
-    fundamental, harmonic, dirac, measure = expsinesweep_asio(ms, mm, fs, f0, f1, tess, tdecay, [(hfir,[1.0])], attenuate)
-    f, y = freqz(fundamental[:,1], fs, unitcircle)
-    ϕ = angle.(y)
+    fundamental, harmonic, dirac, measure = expsinesweep_asio(ms, mm, fs, f0, f1, tess, tdecay, [(h,[1.0])], attenuate)
+    f, y = Libaudio.freqz(fundamental[:,1], fs, unitcircle)
     yd = 20log10.(abs.(y))
     yds = Libaudio.smoothspectrum(yd, f, noct)
     
     PyPlot.figure(1)
     PyPlot.semilogx(f, yd)
     PyPlot.semilogx(f, yds)
-    
-    return hfir
+    return nothing
 end
 
 
