@@ -511,8 +511,8 @@ function minimalphase_eq(ms::Matrix, mm::Matrix, fs, f0, f1=fs/2, fx=150, attenu
     PyPlot.figure(1)
     PyPlot.semilogx(f, xd)
     PyPlot.semilogx(f, xds)
-    PyPlot.title('impulse response in frequency domain, with 1/3 octave smoothing')
-    PyPlot.xlabel('Hz')
+    PyPlot.title("impulse response in frequency domain, with 1/3 octave smoothing")
+    PyPlot.xlabel("Hz")
     PyPlot.grid()
 
     # construct a minimal phase filter of the smoothed impulse response
@@ -527,8 +527,8 @@ function minimalphase_eq(ms::Matrix, mm::Matrix, fs, f0, f1=fs/2, fx=150, attenu
     figure(2)
     PyPlot.semilogx(f, 20log10.(abs.(y[1:m])))
     PyPlot.semilogx(f, 20log10.(abs.(fft(fundamental_mp)[1:m]))) 
-    PyPlot.xlabel('Hz')
-    PyPlot.title('minimal phase filter constructed based on smoothed frequency response')
+    PyPlot.xlabel("Hz")
+    PyPlot.title("minimal phase filter constructed based on smoothed frequency response")
     PyPlot.grid()
     
 
@@ -557,8 +557,8 @@ function minimalphase_eq(ms::Matrix, mm::Matrix, fs, f0, f1=fs/2, fx=150, attenu
     hm = real(ifft(hms))    # not symmetrical
     hms = fft(hm)/nfft
     PyPlot.semilogx(f, 20log10.(abs.(hms[1:m]))) 
-    PyPlot.xlabel('Hz') 
-    PyPlot.title('Compensation filter and its minimal-phase realization')
+    PyPlot.xlabel("Hz") 
+    PyPlot.title("Compensation filter and its minimal-phase realization")
     PyPlot.grid()
     
     figure(2) 
