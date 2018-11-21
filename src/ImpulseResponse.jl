@@ -516,7 +516,7 @@ function minimalphase_eq(ms::Matrix, mm::Matrix, fs, f0, f1=fs/2, fx=150, attenu
     PyPlot.grid()
 
     # construct a minimal phase filter of the smoothed impulse response
-    xs = 10.^(xds/20)
+    xs = 10 .^ (xds/20)
     xs = [xs; reverse(xs[2:end-1])]
     fundamental_sm = real(ifft(xs .* exp.(ϕ*im)))
     
@@ -546,7 +546,7 @@ function minimalphase_eq(ms::Matrix, mm::Matrix, fs, f0, f1=fs/2, fx=150, attenu
     figure(3) 
     PyPlot.semilogx(f, H)
     
-    H = 10.^(H/20) * nfft
+    H = 10 .^ (H/20) * nfft
     H = [H; reverse(H[2:end-1])]
     H = H .* exp.(ϕ*im)
     h = real(ifft(H))
