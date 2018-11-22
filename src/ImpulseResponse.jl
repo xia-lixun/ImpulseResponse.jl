@@ -536,7 +536,7 @@ function minimalphase_fir_design(f, m, ϕ, xds, fs, f0, f1, fx, unitcircle=1024)
         z = Libaudio.mps(y)
         fundamental_mp = real(ifft(z))    # not symmetrical
     
-        PyPlot.figure("mininal phase design")
+        PyPlot.figure("minimal-phase design")
         PyPlot.semilogx(f, 20log10.(abs.(y[1:m])))
         PyPlot.semilogx(f, 20log10.(abs.(fft(fundamental_mp)[1:m]))) 
         PyPlot.xlabel("Hz")
@@ -572,7 +572,7 @@ function minimalphase_fir_design(f, m, ϕ, xds, fs, f0, f1, fx, unitcircle=1024)
         PyPlot.xlabel("Hz") 
         PyPlot.grid(true)
         
-        PyPlot.figure("mininal-phase design") 
+        PyPlot.figure("minimal-phase design") 
         PyPlot.semilogx(f, 20log10.(abs.(hms[1:m]))+xds) 
         hfir = hm / nfft
 end
@@ -590,7 +590,7 @@ function minimalphase_fir_verification(h, ms::Matrix, mm::Matrix, fs, f0, f1=fs/
     PyPlot.semilogx(f, xd)
     PyPlot.semilogx(f, xds)
 
-    
+
     ω, y = Libaudio.freqz(harmonic[:,1], fs, unitcircle)
     yd = 20log10.(abs.(y))
 

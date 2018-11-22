@@ -68,6 +68,7 @@ end
 
 
 function minimalphase_eq_test()
+    
     ms = [0 0 0 0 1 0 0 0]
     mm = [1,0]
     mm = mm[:,:]
