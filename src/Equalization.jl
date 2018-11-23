@@ -141,7 +141,7 @@ end
         self[:lab8] = tk.Label(self[:lf4], text="file name")
         self[:lab8][:pack](side="left")
         self[:ent8v] = tk.StringVar(value="euqalization-20181122.h5")
-        self[:ent8] = tk.Entry(self[:lf4], width=20, textvariable=self[:ent8v])
+        self[:ent8] = tk.Entry(self[:lf4], width=40, textvariable=self[:ent8v])
         self[:ent8][:pack](side="left")
 
         self[:lab9] = tk.Label(self[:lf4], text="dataset name")
