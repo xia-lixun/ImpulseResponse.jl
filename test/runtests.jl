@@ -1,5 +1,6 @@
 import ImpulseResponse
 
+using HDF5
 using Test
 @everywhere using DeviceUnderTest
 @everywhere using Soundcard
@@ -96,4 +97,8 @@ function minimalphase_eq_test()
     f0 = 22
     f1 = 22000
     ImpulseResponse.minimalphase_fir_verification(h, ms, mm, fs, f0, f1, atten, n);
+
+    h5write(joinpath("equalizationfilters-20181123.h5"), "mth1", convert(Matrix{Float64},h[:,:]))
+
 end
+
